@@ -1,8 +1,6 @@
 ;;;file: copy.cl
 ;;;purpose: compare 3 copying algorithms: AM, AC, & CIU
-;;;programmer: Tom Shultz
-;;;started: 20 aug 2015
-;;;current: 19 sept 2015
+;;;programmer: Shuaibo Huang, Tom Shultz
 
 ;;;globals
 
@@ -326,7 +324,7 @@ Run n simulations, returning list of cycles required for consensus.
 p is probability of copying.
 Algorithm is 'am, 'ac, or 'ciu."
   (seed-random)
-  (setq *path* "/Users/tom1/Documents/models m/copy/results/")
+  (setq *path* "~/Desktop/SocialImitationPhenomenna/results/")
   (do ((i 0 (1+ i))
        (cycles nil)
        (ucounts nil)
@@ -408,7 +406,7 @@ Run n simulations to max cycle, recording cycle lists of nx for each simulation
 p is probability of copying.
 Algorithm is 'am, 'ac, or 'ciu."
   (seed-random)
-  (setq *path* "/Users/tom1/Documents/models m/copy/results/")
+  (setq *path* "~/Desktop/SocialImitationPhenomenna/results/")
   (do ((i 0 (1+ i))
        (ucounts nil)
        (xcounts nil)
@@ -469,7 +467,7 @@ Run n simulations to max cycle, recording xcounts at ends for newbie y section.
 p is probability of copying.
 Algorithm is 'am, 'ac, or 'ciu."
   (seed-random)
-  (setq *path* "/Users/tom1/Documents/models m/copy/results/")
+  (setq *path* "~/Desktop/SocialImitationPhenomenna/results/")
   (do ((i 0 (1+ i))
        (counts nil (cons (run1-to-cycle-switch nu nx ny max p algorithm)
                          counts)))
@@ -510,7 +508,7 @@ Run n simulations to max cycle, recording cycle lists of nx for newbies & vets
 for each simulation & simulation x cycle table of nx at end for newbies & vets.
 p is probability of copying. Algorithm is 'am, 'ac, or 'ciu."
   (seed-random)
-  (setq *path* "/Users/tom1/Documents/models m/copy/results/")
+  (setq *path* "~/Desktop/SocialImitationPhenomenna/results/")
   (do ((i 0 (1+ i))
        (countx-newbies nil)
        (countx-vets nil))
@@ -566,7 +564,7 @@ Run n simulations to max cycle, recording cycle lists of state counts for each s
 p is probability of copying.
 Algorithm is 'am, 'ac, or 'ciu."
   (seed-random)
-  (setq *path* "/Users/tom1/Documents/models m/copy/results/")
+  (setq *path* "~/Desktop/SocialImitationPhenomenna/results/")
   (do ((i 0 (1+ i))
        (ucounts nil)
        (xcounts nil)
