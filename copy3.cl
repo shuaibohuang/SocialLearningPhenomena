@@ -5,15 +5,22 @@
 ;;;globals
 
 (defstruct agent
-  "Agent has id index & state."
+  "Agent has id index, state and region."
   id
-  state)
+  state
+  )
 
-(defvar *agents* nil
-  "Array of agents.")
+(defvar *agents1* nil
+  "Array of agents in region One.")
+"______________________________Extenstion Made___________________________"
+(defvar *agents2* nil
+  "Array of agents in region Two")
 
-(defvar *array-size* 100
-  "Size of agent array.")
+(defvar *array1-size* 100
+  "Size of agent1 array.")
+"______________________________Extenstion Made___________________________"
+(defvar *array2-size* 100
+  "Size of agent2 array")
 
 (defvar *path* nil
   "Path for saving files.")
