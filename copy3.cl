@@ -7,7 +7,8 @@
 (defstruct agent
   "Agent has id index & state."
   id
-  state)
+  state
+  agent)
 
 (defvar *agents* nil
   "Array of agents.")
