@@ -8,7 +8,7 @@
   "Agent has id index & state."
   id
   state
-  agent)
+  region)
 
 (defvar *agents* nil
   "Array of agents.")
@@ -41,36 +41,47 @@ Useful for generating unique random sequences."
 
 ;;;make agents
 
-(defun initialize-array (nu nx ny)
-  "(nu nx ny)
+"______________________________EXTENSION______________________________"
+(defun initialize-array (nu1 nx1 ny1 nu2 nx2 ny2)
+  "(nu1 nx1 ny1 nu2 nx2 ny2)
 Set *array-size* to sum of numbers of agents.
 Initialize *agents* array with nil elements."
-  (setf *array-size* (+ nu nx ny)
+  (setf *array-size* (+ nu1 nu2 nx1 nx2 ny1 ny2)
     *agents* (make-array *array-size* :initial-element nil)))
 
 ;;;(initialize-array 4 1 0)
 
-(defun make-1-agent (i s)
-  "(i s)
-Make or change state of agent i to s."
+(defun make-1-agent (i s r)
+  "(i s r)
+Make or change state of agent i to s in region r."
   (setf (aref *agents* i) 
     (make-agent :id i
-                :state s)))
+                :state s
+                :region r)))
 
 ;;;(make-1-agent 2 'u)
 
-(defun make-agent-array (nu nx ny)
-  "(nu nx ny)
+(defun make-agent-array (nu1 nx1 ny1 nu2 nx2 ny2)
+  "(nu1 nu2 nx1 nx2 ny1 ny2)
 Make agent array."
   (do ((i 0 (1+ i)))
-      ((= i nu))
-    (make-1-agent i 'u))
-  (do ((i nu (1+ i)))
-      ((= i (+ nu nx)))
-    (make-1-agent i 'x))
-  (do ((i (+ nu nx) (1+ i)))
-      ((= i (+ nu nx ny)))
-    (make-1-agent i 'y)))
+      ((= i nu1))
+    (make-1-agent i 'u 1))
+  (do ((i nu1 (1+ i)))
+      ((= i (+ nu1 nu2)))
+    (make-1-agent i 'u 2))
+  (do ((i (+ nu1 nu2) (1+ i)))
+      ((= i (+ nu1 nu2 nx1)))
+    (make-1-agent i 'x 1))
+  (do ((i (+ nu1 nu2 nx1) (1+ i)))
+      ((= i (+ nu1 nu2 nx1 nx2)))
+    (make-1-agent i 'x 2))
+  (do ((i (+ nu1 nu2 nx1 nx2) (1+ i)))
+      ((= i (+ nu1 nu2 nx1 nx2 ny1)))
+    (make-1-agent i 'y 1))
+  (do ((i (+ nu1 nu2 nx1 nx2 ny1)(1+ i)))
+      ((= i (+ nu1 nu2 nx1 nx2 ny1 ny2)))
+    (make-1-agent i 'y 2)))
 
 ;;;(initialize-array 4 2 0)
 ;;;(make-agent-array 4 2 0)
@@ -85,12 +96,19 @@ Return state of agent at a."
     (agent-state agent)))
 
 ;;;(get-agent-state 3)
+"____________________________________________________________________________"
+(defun get-agent-region (a)
+  "(a)
+REturn region of agent at a"
+  (let ((agent (aref *agents* a)))
+    (agent-region agent)))
 
-(defun count-state (state)
+
+(defun count-state (state region)
   "(state)
 Count state across agents."
   (do ((i 0 (1+ i))
-       (n 0 (if (eq (get-agent-state i) state)
+       (n 0 (if (and (eq (get-agent-state i) state) (= (get-agent-region i) region))
                 (1+ n)
               n)))
       ((= i *array-size*) n)))
@@ -98,27 +116,27 @@ Count state across agents."
 ;;;(count-state 'u)
 ;;;(count-state 'x)
 
-(defun count-states (states)
+(defun count-states (states region)
   "(states)
 Count each state across agents."
   (do ((stts states (cdr stts))
-       (counts nil (cons (count-state (car stts))
+       (counts nil (cons (count-state (car stts) region)
                          counts)))
       ((null stts) (reverse counts))))
 
-;;;(count-states '(u x y))
+;;;(count-states '(u x y) 1)
 
-(defun count-state-section (state start end)
-  "(state start end)
+(defun count-state-section (state start end region)
+  "(state start end region)
 Count state for array section from start up to but not including end index."
   (do ((i start (1+ i))
-       (n 0 (if (eq (get-agent-state i) state)
+       (n 0 (if (and (eq (get-agent-state i) state) (= (get-agent-region i) region))
                 (1+ n)
               n)))
       ((= i end) n)))
 
-;;;(count-state-section 'x 4 5)
-;;;(count-state-section 'x 4 6)
+;;;(count-state-section 'x 4 5 1)
+;;;(count-state-section 'x 4 6 1)
 
 ;;;interact
 
@@ -127,10 +145,13 @@ Count state for array section from start up to but not including end index."
 Initiator i convinces undecided recipient r in AM."
   (let* ((r-agent (aref *agents* r))
          (i-state (get-agent-state i))
-         (r-state (get-agent-state r)))
+         (r-state (get-agent-state r))
+         (i-region (get-agent-region i))
+         (r-region (get-agent-region r)))
     (if (and (not (eq i-state 'u))
              (eq r-state 'u)
-             (< (random 1.0) p))
+             (< (random 1.0) p)
+             (= i-region r-region))
         (setf (agent-state r-agent) i-state))))
             
 ;;;(decide-agent 4 2 1.0)
@@ -140,11 +161,14 @@ Initiator i convinces undecided recipient r in AM."
 Initiator i confuses decided recipient r in AM."
   (let* ((r-agent (aref *agents* r))
          (i-state (get-agent-state i))
-         (r-state (get-agent-state r)))
+         (r-state (get-agent-state r))
+         (r-region (get-agent-region r))
+         (i-region (get-agent-region i)))
     (if (and (not (eq i-state 'u))
              (not (eq r-state 'u))
              (not (eq i-state r-state))
-             (< (random 1.0) p))
+             (< (random 1.0) p)
+             (= i-region r-region))
         (setf (agent-state r-agent) 'u))))
 
 ;;;(confuse-agent 6 2 1.0)
@@ -165,9 +189,12 @@ Recipient imitates decided initiator in AC."
   (let* ((i (first agents))
          (r (second agents))
          (r-agent (aref *agents* r))
-         (i-state (get-agent-state i)))
+         (i-state (get-agent-state i))
+         (r-region (get-agent-region r))
+         (i-region (get-agent-region i)))
     (if (and (not (eq i-state 'u))
-             (< (random 1.0) p))
+             (< (random 1.0) p)
+             (= i-region r-region))
         (setf (agent-state r-agent) i-state))))
 
 ;;;(interact-ac '(4 0) 1.0)
@@ -179,10 +206,13 @@ Undecided recipient imitates decided initiator in CIU."
          (r (second agents))
          (r-agent (aref *agents* r))
          (i-state (get-agent-state i))
-         (r-state (get-agent-state r)))
+         (r-state (get-agent-state r))
+         (r-region (get-agent-region r))
+         (i-region (get-agent-region i)))
     (if (and (not (eq i-state 'u))
              (eq r-state 'u)
-             (< (random 1.0) p))
+             (< (random 1.0) p)
+             (= r-region i-region))
         (setf (agent-state r-agent) i-state))))
 
 ;;;(interact-ciu '(4 0) 1.0)
