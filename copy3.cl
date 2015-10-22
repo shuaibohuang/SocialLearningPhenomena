@@ -137,6 +137,17 @@ Count state for array section from start up to but not including end index."
 
 ;;;(count-state-section 'x 4 5 1)
 ;;;(count-state-section 'x 4 6 1)
+(defun travel (p i)
+  "(p i)
+Agent i Travel from region one to region two,
+Or travel from region two to region one.
+P is the probability of traveling"
+  (setf i-agent (aref *agents* i))
+  (if (< (random 1.0) p)
+      (if (= 2 (get-agent-region i))
+          (setf (agent-region i-agent) 1)
+        (setf (agent-region i-agent) 2)))
+  )
 
 ;;;interact
 
@@ -324,37 +335,54 @@ Algorithm is 'am, 'ac, or 'ciu."
     (ciu (interact-ciu (get-2-random-agents) p))
     (otherwise (error "Unknown algorithm"))))
 
+
 ;;;run simulation
 "_______Because there will be traveling between agents, so there will never be saturation__________"
 
-(defun run1-to-cycle (nu1 nx1 ny1 nu1 nx1 ny1 max p replication algo)
+(defun run1-to-cycle (nu1 nx1 ny1 nu2 nx2 ny2 max p replication algo)
   "(nu nx ny max p replication algo)
 Run simulation until max cycle, record state counts per cycle, & return state counts at max cycle.
 p is probability of copying.
 Algorithm is 'am, 'ac, or 'ciu."
-  (initialize-array nu nx ny)
-  (make-agent-array nu nx ny)
+  (initialize-array nu1 nx1 ny1 nu2 nx2 ny2)
+  (make-agent-array nu1 nx1 ny1 nu2 nx2 ny2)
   (do ((i 0 (1+ i))
-       (ucount (list nu) (cons (count-state 'u) 
-                               ucount))
-       (xcount (list nx) (cons (count-state 'x) 
-                               xcount))
-       (ycount (list ny) (cons (count-state 'y) 
-                               ycount)))
+       (ucount1 (list nu1) (cons (count-state 'u 1) 
+                               ucount1))
+       (xcount1 (list nx1) (cons (count-state 'x 1) 
+                               xcount1))
+       (ycount1 (list ny1) (cons (count-state 'y 1) 
+                                 ycount1))
+       (ucount2 (list nu2) (cons (count-state 'u 2) 
+                               ucount2))
+       (xcount2 (list nx2) (cons (count-state 'x 2) 
+                               xcount2))
+       (ycount2 (list ny2) (cons (count-state 'y 2) 
+                               ycount2)))
       ((= i max) (progn 
-                   (lists->file ucount 
-                                (concatenate 'string *path* (princ-to-string replication) "ucount"))
-                   (lists->file xcount 
-                                (concatenate 'string *path* (princ-to-string replication) "xcount"))
-                   (lists->file ycount 
-                                (concatenate 'string *path* (princ-to-string replication) "ycount"))
-                   (list (reverse ucount) 
-                         (reverse xcount) 
-                         (reverse ycount) 
-                         (list (first xcount) (first ycount)))))
+                   (lists->file ucount1 
+                                (concatenate 'string *path* (princ-to-string replication) "ucount1"))
+                   (lists->file xcount1 
+                                (concatenate 'string *path* (princ-to-string replication) "xcount1"))
+                   (lists->file ycount1 
+                                (concatenate 'string *path* (princ-to-string replication) "ycount1"))
+                   (lists->file ucount2 
+                                (concatenate 'string *path* (princ-to-string replication) "ucount2"))
+                   (lists->file xcount2 
+                                (concatenate 'string *path* (princ-to-string replication) "xcount2"))
+                   (lists->file ycount2 
+                                (concatenate 'string *path* (princ-to-string replication) "ycount2"))
+                   (list (reverse ucount1) 
+                         (reverse xcount1) 
+                         (reverse ycount1)
+                         (reverse ucount2) 
+                         (reverse xcount2) 
+                         (reverse ycount2) 
+                         (list (first xcount1) (first ycount1) (first xcount2) (first ycount2)))))
+    (travel 0 (get-random-agent))
     (call-algorithm algo p)))
 
-(defun run-to-cycle (n nu nx ny max p algorithm)
+(defun run-to-cycle (n nu1 nx1 ny1 nu2 nx2 ny2 max p algorithm)
   "(n nu nx ny max p algorithm)
 Run n simulations to max cycle, recording cycle lists of nx for each simulation 
 & simulation x cycle table of nx at end.
@@ -363,36 +391,54 @@ Algorithm is 'am, 'ac, or 'ciu."
   (seed-random)
   (setq *path* "~/Desktop/SocialImitationPhenomenna/results/")
   (do ((i 0 (1+ i))
-       (ucounts nil)
-       (xcounts nil)
-       (ycounts nil)
+       (ucounts1 nil)
+       (xcounts1 nil)
+       (ycounts1 nil)
+       (ucounts2 nil)
+       (xcounts2 nil)
+       (ycounts2 nil)
        (finishes nil))
       ((= i n) (progn
                  (lists->file
-                  (reverse (rotate (reverse ucounts)))
-                  (concatenate 'string *path* "ucounts"))
+                  (reverse (rotate (reverse ucounts1)))
+                  (concatenate 'string *path* "ucounts1"))
                  (lists->file
-                  (reverse (rotate (reverse xcounts)))
-                  (concatenate 'string *path* "xcounts"))
+                  (reverse (rotate (reverse xcounts1)))
+                  (concatenate 'string *path* "xcounts1"))
                  (lists->file
-                  (reverse (rotate (reverse ycounts)))
-                  (concatenate 'string *path* "ycounts"))
+                  (reverse (rotate (reverse ycounts1)))
+                  (concatenate 'string *path* "ycounts1"))
+                 (lists->file
+                  (reverse (rotate (reverse ucounts2)))
+                  (concatenate 'string *path* "ucounts2"))
+                 (lists->file
+                  (reverse (rotate (reverse xcounts2)))
+                  (concatenate 'string *path* "xcounts2"))
+                 (lists->file
+                  (reverse (rotate (reverse ycounts2)))
+                  (concatenate 'string *path* "ycounts2"))
                  (lists->file finishes (concatenate 'string *path* "finishes"))
                  (let ((winners (winners finishes)))
                    (with-open-file
                        (output-stream (concatenate 'string *path* "winners") 
                                       :direction :output)
-                     (format output-stream "~a x  ~a y"
-                       (first winners) (second winners))))))
-    (let ((counts (run1-to-cycle nu nx ny max p i algorithm)))
+                     (format output-stream "~a x1  ~a y1 ~a x2 ~a y2"
+                       (first winners) (second winners) (third winners) (fourth winners))))))
+    (let ((counts (run1-to-cycle nu1 nx1 ny1 nu2 nx2 ny2 max p i algorithm)))
       (setf 
-       ucounts (cons (first counts)
-                     ucounts)
-       xcounts (cons (second counts)
-                     xcounts)
-       ycounts (cons (third counts)
-                     ycounts)
-       finishes (cons (fourth counts)
+       ucounts1 (cons (first counts)
+                     ucounts1)
+       xcounts1 (cons (second counts)
+                     xcounts1)
+       ycounts1 (cons (third counts)
+                     ycounts1)
+       ucounts2 (cons (fourth counts)
+                     ucounts2)
+       xcounts2 (cons (fifth counts)
+                     xcounts2)
+       ycounts2 (cons (sixth counts)
+                     ycounts2)
+       finishes (cons (seventh counts)
                       finishes)))))
 
 ;;;(run-to-cycle 20 13 6 0 17 1.0 'ac)
