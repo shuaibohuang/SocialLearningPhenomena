@@ -47,40 +47,71 @@ Useful for generating unique random sequences."
 
 ;;;make agents
 
-(defun initialize-array (nu nx ny)
+(defun initialize-array1 (nu nx ny)
   "(nu nx ny)
 Set *array-size* to sum of numbers of agents.
 Initialize *agents* array with nil elements."
-  (setf *array-size* (+ nu nx ny)
-    *agents* (make-array *array-size* :initial-element nil)))
+  (setf *array1-size* (+ nu nx ny)
+    *agents1* (make-array *array1-size* :initial-element nil)))
+
+"______________________________Extenstion Made___________________________"
+(defun initialize-array2 (nu nx ny)
+  "(nu nx ny)
+Set *array-size* to sum of numbers of agents.
+Initialize *agents* array with nil elements."
+  (setf *array2-size* (+ nu nx ny)
+    *agents2* (make-array *array2-size* :initial-element nil)))
 
 ;;;(initialize-array 4 1 0)
 
-(defun make-1-agent (i s)
+(defun make-1-agent1 (i s)
   "(i s)
 Make or change state of agent i to s."
-  (setf (aref *agents* i) 
+  (setf (aref *agents1* i) 
     (make-agent :id i
-                :state s)))
+                 :state s)))
 
-;;;(make-1-agent 2 'u)
+"______________________________Extenstion Made___________________________"
+(defun make-1-agent2 (i s)
+  "(i s)
+Make or change state of agent i to s."
+  (setf (aref *agents2* i) 
+    (make-agent :id i
+                 :state s)))
 
-(defun make-agent-array (nu nx ny)
+;;;(make-1-agent1 2 'u)
+
+(defun make-agent-array1 (nu nx ny)
   "(nu nx ny)
-Make agent array."
+Make agent int array1."
   (do ((i 0 (1+ i)))
       ((= i nu))
-    (make-1-agent i 'u))
+    (make-1-agent1 i 'u))
   (do ((i nu (1+ i)))
       ((= i (+ nu nx)))
-    (make-1-agent i 'x))
+    (make-1-agent1 i 'x))
   (do ((i (+ nu nx) (1+ i)))
       ((= i (+ nu nx ny)))
-    (make-1-agent i 'y)))
+    (make-1-agent1 i 'y)))
 
-;;;(initialize-array 4 2 0)
-;;;(make-agent-array 4 2 0)
-;;;*agents*
+"______________________________Extenstion Made___________________________"
+
+(defun make-agent-array2 (nu nx ny)
+  "(nu nx ny)
+Make agent int array2."
+  (do ((i 0 (1+ i)))
+      ((= i nu))
+    (make-1-agent2 i 'u))
+  (do ((i nu (1+ i)))
+      ((= i (+ nu nx)))
+    (make-1-agent2 i 'x))
+  (do ((i (+ nu nx) (1+ i)))
+      ((= i (+ nu nx ny)))
+    (make-1-agent2 i 'y)))
+
+;;;(initialize-array2 4 2 0)
+;;;(make-agent-array2 4 2 0)
+;;;*agents2*
 
 ;;;count states
 
