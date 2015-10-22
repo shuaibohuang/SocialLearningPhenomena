@@ -293,13 +293,19 @@ Rotate list of lists."
   "(finishes)
 Compute winners from finishing counts of x & y."
   (do ((fnshs finishes (cdr fnshs))
-       (xwins 0 (if (> (first (car fnshs)) (second (car fnshs)))
-                    (1+ xwins)
-                  xwins))
-       (ywins 0 (if (< (first (car fnshs)) (second (car fnshs)))
-                    (1+ ywins)
-                  ywins)))
-      ((null fnshs) (list xwins ywins))))
+       (xwins1 0 (if (> (first (car fnshs)) (second (car fnshs)))
+                    (1+ xwins1)
+                  xwins1))
+       (ywins1 0 (if (< (first (car fnshs)) (second (car fnshs)))
+                    (1+ ywins1)
+                   ywins1))
+       (xwins2 0 (if (> (third (car fnshs)) (fourth (car fnshs)))
+                    (1+ xwins2)
+                  xwins2))
+       (ywins2 0 (if (< (third (car fnshs)) (fourth (car fnshs)))
+                    (1+ ywins2)
+                  ywins2)))
+      ((null fnshs) (list xwins1 ywins1 xwins2 ywins2))))
 
 ;;;(winners '((0 20) (20 0) (20 0) (20 0) (20 0) (0 20) (20 0) (20 0) (20 0) (20 0) (20 0) (20 0) (20 0)
 ;;;           (20 0) (20 0) (20 0) (20 0) (20 0) (20 0) (20 0)))
@@ -319,91 +325,9 @@ Algorithm is 'am, 'ac, or 'ciu."
     (otherwise (error "Unknown algorithm"))))
 
 ;;;run simulation
+"_______Because there will be traveling between agents, so there will never be saturation__________"
 
-(defun run1-saturation (nu nx ny p replication algo)
-  "(nu nx ny p replication algo)
-Run simulation until consensus, recording counts at each cycle.
-p is probability of copying.
-Algorithm is 'am, 'ac, or 'ciu."
-  (initialize-array nu nx ny)
-  (make-agent-array nu nx ny)
-  (do ((cycles 0 (1+ cycles))
-       (ucount (list nu) (cons (count-state 'u) 
-                               ucount))
-       (xcount (list nx) (cons (count-state 'x) 
-                               xcount))
-       (ycount (list ny) (cons (count-state 'y) 
-                               ycount)))
-      ((consensusp (list (first ucount) (first xcount) (first ycount)))
-       (progn 
-         (lists->file ucount 
-                      (concatenate 'string *path* (princ-to-string replication) "ucount"))
-         (lists->file xcount 
-                      (concatenate 'string *path* (princ-to-string replication) "xcount"))
-         (lists->file ycount 
-                      (concatenate 'string *path* (princ-to-string replication) "ycount"))
-         (list (reverse ucount) 
-               (reverse xcount) 
-               (reverse ycount) 
-               cycles
-               (list (first xcount) (first ycount)))))
-    (call-algorithm algo p)))
-
-(defun run-saturation (n nu nx ny p algorithm)
-  "(n nu nx ny p algorithm)
-Run n simulations, returning list of cycles required for consensus.
-p is probability of copying.
-Algorithm is 'am, 'ac, or 'ciu."
-  (seed-random)
-  (setq *path* "~/Desktop/SocialImitationPhenomenna/results/")
-  (do ((i 0 (1+ i))
-       (cycles nil)
-       (ucounts nil)
-       (xcounts nil)
-       (ycounts nil)
-       (finishes nil))
-      ((= i n) (progn
-                 (lists->file 
-                  cycles
-                  (concatenate 'string *path* "cycles"))
-                 (lists->file
-                  (reverse (rotate (reverse ucounts)))
-                  (concatenate 'string *path* "ucounts"))
-                 (lists->file
-                  (reverse (rotate (reverse xcounts)))
-                  (concatenate 'string *path* "xcounts"))
-                 (lists->file
-                  (reverse (rotate (reverse ycounts)))
-                  (concatenate 'string *path* "ycounts"))
-                 (lists->file finishes (concatenate 'string *path* "finishes"))
-                 (let ((winners (winners finishes)))
-                   (with-open-file
-                       (output-stream (concatenate 'string *path* "winners") 
-                                      :direction :output)
-                     (format output-stream "~a x  ~a y"
-                       (first winners) (second winners))))))
-    (let ((counts (run1-saturation nu nx ny p i algorithm)))
-      (setf 
-       ucounts (cons (first counts)
-                     ucounts)
-       xcounts (cons (second counts)
-                     xcounts)
-       ycounts (cons (third counts)
-                     ycounts)
-       cycles (cons (fourth counts)
-                    cycles)
-       finishes (cons (fifth counts)
-                      finishes)))))
-
-;;;(run-saturation 20 13 6 1 1.0 'ac)
-;;;(run-saturation 20 13 6 1 1.0 'ciu)  out of memory
-
-;;;(run-saturation 20 98 2 0 1.0 'ac)
-;;;(run-saturation 20 98 2 0 1.0 'ciu)
-
-;;;run ac to 570 cycles
-
-(defun run1-to-cycle (nu nx ny max p replication algo)
+(defun run1-to-cycle (nu1 nx1 ny1 nu1 nx1 ny1 max p replication algo)
   "(nu nx ny max p replication algo)
 Run simulation until max cycle, record state counts per cycle, & return state counts at max cycle.
 p is probability of copying.
