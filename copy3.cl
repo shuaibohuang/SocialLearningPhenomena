@@ -4,8 +4,9 @@
 
 ;;;globals
 
+"______________getting region property of agents_________"
 (defstruct agent
-  "Agent has id index & state."
+  "Agent has id index region & state."
   id
   state
   region)
@@ -41,7 +42,8 @@ Useful for generating unique random sequences."
 
 ;;;make agents
 
-"______________________________EXTENSION______________________________"
+"_______________Parameters and the way of initiating array are changed_____________________"
+"_____nu1 denotes #uncertain in region 1 and nu2 denotes #uncertain in region 2____"
 (defun initialize-array (nu1 nx1 ny1 nu2 nx2 ny2)
   "(nu1 nx1 ny1 nu2 nx2 ny2)
 Set *array-size* to sum of numbers of agents.
@@ -61,8 +63,9 @@ Make or change state of agent i to s in region r."
 
 ;;;(make-1-agent 2 'u)
 
+"________________changes are made on how to initiate the array_________________"
 (defun make-agent-array (nu1 nx1 ny1 nu2 nx2 ny2)
-  "(nu1 nu2 nx1 nx2 ny1 ny2)
+  "(nu1 nx1 ny1 nu2 nx2 ny2)
 Make agent array."
   (do ((i 0 (1+ i)))
       ((= i nu1))
@@ -82,7 +85,7 @@ Make agent array."
   (do ((i (+ nu1 nu2 nx1 nx2 ny1)(1+ i)))
       ((= i (+ nu1 nu2 nx1 nx2 ny1 ny2)))
     (make-1-agent i 'y 2)))
-
+"_______The returning array will be (nu1 nu2 nx1 nx2 ny1 ny2)_________"
 ;;;(initialize-array 4 2 0)
 ;;;(make-agent-array 4 2 0)
 ;;;*agents*
@@ -96,10 +99,10 @@ Return state of agent at a."
     (agent-state agent)))
 
 ;;;(get-agent-state 3)
-"____________________________________________________________________________"
+"__________________________New function added___________________________________"
 (defun get-agent-region (a)
   "(a)
-REturn region of agent at a"
+Return region of agent at a"
   (let ((agent (aref *agents* a)))
     (agent-region agent)))
 
@@ -116,6 +119,7 @@ Count state across agents."
 ;;;(count-state 'u)
 ;;;(count-state 'x)
 
+"____________this function now counts state in certain region(1 or 2)________"
 (defun count-states (states region)
   "(states)
 Count each state across agents."
@@ -126,6 +130,7 @@ Count each state across agents."
 
 ;;;(count-states '(u x y) 1)
 
+"________count in certain region_________________"
 (defun count-state-section (state start end region)
   "(state start end region)
 Count state for array section from start up to but not including end index."
@@ -137,6 +142,7 @@ Count state for array section from start up to but not including end index."
 
 ;;;(count-state-section 'x 4 5 1)
 ;;;(count-state-section 'x 4 6 1)
+"______________NEW FUNCTION_______________________"
 (defun travel (p i)
   "(p i)
 Agent i Travel from region one to region two,
@@ -150,7 +156,7 @@ P is the probability of traveling"
   )
 
 ;;;interact
-
+"_____only agent from the same region can communicate______"
 (defun decide-agent (i r p)
   "(i r p)
 Initiator i convinces undecided recipient r in AM."
@@ -166,7 +172,7 @@ Initiator i convinces undecided recipient r in AM."
         (setf (agent-state r-agent) i-state))))
             
 ;;;(decide-agent 4 2 1.0)
-
+"_____only agent from the same region can communicate______"
 (defun confuse-agent (i r p)
   "(i r p)
 Initiator i confuses decided recipient r in AM."
@@ -194,6 +200,7 @@ Initiator i & recipient r interact in AM."
         (decide-agent i r p)
       (confuse-agent i r p))))
 
+"_____only agent from the same region can communicate______"
 (defun interact-ac (agents p)
   "(agents p)
 Recipient imitates decided initiator in AC."
@@ -210,6 +217,7 @@ Recipient imitates decided initiator in AC."
 
 ;;;(interact-ac '(4 0) 1.0)
 
+"_____only agent from the same region can communicate______"
 (defun interact-ciu (agents p)
   "(agents p)
 Undecided recipient imitates decided initiator in CIU."
@@ -337,7 +345,8 @@ Algorithm is 'am, 'ac, or 'ciu."
 
 
 ;;;run simulation
-"_______Because there will be traveling between agents, so there will never be saturation__________"
+"_______Because there will be traveling between agents, so it will less likely to be saturations__________"
+
 
 (defun run1-to-cycle (nu1 nx1 ny1 nu2 nx2 ny2 max p replication algo)
   "(nu nx ny max p replication algo)
@@ -358,7 +367,7 @@ Algorithm is 'am, 'ac, or 'ciu."
        (xcount2 (list nx2) (cons (count-state 'x 2) 
                                xcount2))
        (ycount2 (list ny2) (cons (count-state 'y 2) 
-                               ycount2)))
+                                 ycount2)))
       ((= i max) (progn 
                    (lists->file ucount1 
                                 (concatenate 'string *path* (princ-to-string replication) "ucount1"))
@@ -379,7 +388,7 @@ Algorithm is 'am, 'ac, or 'ciu."
                          (reverse xcount2) 
                          (reverse ycount2) 
                          (list (first xcount1) (first ycount1) (first xcount2) (first ycount2)))))
-    (travel 0 (get-random-agent))
+    (travel 1 (get-random-agent))
     (call-algorithm algo p)))
 
 (defun run-to-cycle (n nu1 nx1 ny1 nu2 nx2 ny2 max p algorithm)
@@ -448,163 +457,3 @@ Algorithm is 'am, 'ac, or 'ciu."
 
 ;;;(run-to-cycle 20 98 2 0 500 1.0 'ciu)
 ;;;(run-to-cycle 20 99 1 0 375 1.0 'ciu)
-
-(defun run1-to-cycle-switch (nu nx ny max p algo)
-  "(nu nx ny max p algo)
-Run n simulations to max cycle, recording final xcounts for newbie y section.
-p is probability of copying.
-Algorithm is 'am, 'ac, or 'ciu."
-  (initialize-array nu nx ny)
-  (make-agent-array nu nx ny)
-  (do ((i 0 (1+ i)))
-      ((= i max) (list (count-state-section 'u 100 114)
-                       (count-state-section 'x 100 114)
-                       (count-state-section 'y 100 114)))
-    (call-algorithm algo p)))
-
-(defun run-to-cycle-switch (n nu nx ny max p algorithm)
-  "(n nu nx ny max p algorithm)
-Run n simulations to max cycle, recording xcounts at ends for newbie y section.
-p is probability of copying.
-Algorithm is 'am, 'ac, or 'ciu."
-  (seed-random)
-  (setq *path* "~/Desktop/SocialImitationPhenomenna/results/")
-  (do ((i 0 (1+ i))
-       (counts nil (cons (run1-to-cycle-switch nu nx ny max p algorithm)
-                         counts)))
-      ((= i n) (lists->file 
-                counts
-                (concatenate 'string *path* "counts")))))
-
-;;;(run-to-cycle-switch 20 25 75 14 570 1.0 'ac)
-;;;(run-to-cycle-switch 20 25 75 14 500 1.0 'ciu)
-
-;;;persist over years
-
-(defun run1-to-cycle-persist (nu nx ny max p replication algo)
-  "(nu nx ny max p replication algo)
-Run simulation until max cycle, record state counts per cycle, & return state counts at max cycle.
-p is probability of copying.
-Algorithm is 'am, 'ac, or 'ciu."
-  (initialize-array nu nx ny)
-  (make-agent-array nu nx ny)
-  (do ((i 0 (1+ i))
-       (countx-newbies nil (cons (count-state-section 'x 0 70)
-                                 countx-newbies))
-       (countx-vets nil (cons (count-state-section 'x 70 100) 
-                              countx-vets)))
-      ((= i max) (progn 
-                   (lists->file 
-                    countx-newbies
-                    (concatenate 'string *path* (princ-to-string replication) "countx-newbies"))
-                   (lists->file 
-                    countx-vets
-                    (concatenate 'string *path* (princ-to-string replication) "countx-vets"))
-                   (list (reverse countx-newbies) (reverse countx-vets))))
-    (call-algorithm algo p)))
-
-(defun run-to-cycle-persist (n nu nx ny max p algorithm)
-  "(n nu nx ny max p algorithm)
-Run n simulations to max cycle, recording cycle lists of nx for newbies & vets 
-for each simulation & simulation x cycle table of nx at end for newbies & vets.
-p is probability of copying. Algorithm is 'am, 'ac, or 'ciu."
-  (seed-random)
-  (setq *path* "~/Desktop/SocialImitationPhenomenna/results/")
-  (do ((i 0 (1+ i))
-       (countx-newbies nil)
-       (countx-vets nil))
-      ((= i n) (progn
-                 (lists->file 
-                  (reverse (rotate (reverse countx-newbies)))
-                  (concatenate 'string *path* "countx-newbies"))
-                 (lists->file 
-                  (reverse (rotate (reverse countx-vets)))
-                  (concatenate 'string *path* "countx-vets"))))
-    (let ((countx-both (run1-to-cycle-persist nu nx ny max p i algorithm)))
-      (setf 
-       countx-newbies (cons (first countx-both)
-                            countx-newbies)
-       countx-vets (cons (second countx-both)
-                         countx-vets)))))
-                                 
-;;;(run-to-cycle-persist 20 70 30 0 142 1.0 'ac)
-
-;;;run to cycle conform
-
-(defun run1-to-cycle-conform (nu nx ny max p replication algo)
-  "(nu nx ny max p replication algo)
-Run simulation until max cycle, record state counts per cycle, & return state counts at max cycle.
-p is probability of copying.
-Algorithm is 'am, 'ac, or 'ciu."
-  (initialize-array nu nx ny)
-  (make-agent-array nu nx ny)
-  (do ((i 0 (1+ i))
-       (ucount (list nu) (cons (count-state 'u) 
-                               ucount))
-       (xcount (list nx) (cons (count-state 'x) 
-                               xcount))
-       (ycount (list ny) (cons (count-state 'y) 
-                               ycount)))
-      ((= i max) (progn 
-                   (lists->file ucount 
-                                (concatenate 'string *path* (princ-to-string replication) "ucount"))
-                   (lists->file xcount 
-                                (concatenate 'string *path* (princ-to-string replication) "xcount"))
-                   (lists->file ycount 
-                                (concatenate 'string *path* (princ-to-string replication) "ycount"))
-                   (list (reverse ucount) 
-                         (reverse xcount) 
-                         (reverse ycount) 
-                         (list (first xcount) (first ycount)))))
-    (call-algorithm algo p)))
-
-(defun run-to-cycle-conform (n nu nx ny max p algorithm)
-  "(n nu nx ny max algorithm)
-Run n simulations to max cycle, recording cycle lists of state counts for each simulation 
-& simulation by cycle table of state counts at end.
-p is probability of copying.
-Algorithm is 'am, 'ac, or 'ciu."
-  (seed-random)
-  (setq *path* "~/Desktop/SocialImitationPhenomenna/results/")
-  (do ((i 0 (1+ i))
-       (ucounts nil)
-       (xcounts nil)
-       (ycounts nil)
-       (finishes nil))
-      ((= i n) (progn
-                 (lists->file
-                  (reverse (rotate (reverse ucounts)))
-                  (concatenate 'string *path* "ucounts"))
-                 (lists->file
-                  (reverse (rotate (reverse xcounts)))
-                  (concatenate 'string *path* "xcounts"))
-                 (lists->file
-                  (reverse (rotate (reverse ycounts)))
-                  (concatenate 'string *path* "ycounts"))
-                 (lists->file finishes (concatenate 'string *path* "finishes"))
-                 (let ((winners (winners finishes)))
-                   (with-open-file
-                       (output-stream (concatenate 'string *path* "winners") 
-                                      :direction :output)
-                     (format output-stream "~a x  ~a y"
-                       (first winners) (second winners))))))
-    (let ((counts (run1-to-cycle-conform nu nx ny max p i algorithm)))
-      (setf 
-       ucounts (cons (first counts)
-                     ucounts)
-       xcounts (cons (second counts)
-                     xcounts)
-       ycounts (cons (third counts)
-                     ycounts)
-       finishes (cons (fourth counts)
-                      finishes)))))
-
-;;;did use
-;;;(run-to-cycle-conform 20 91 8 1 400 1.0 'am)
-;;;(run-to-cycle-conform 20 91 8 1 400 1.0 'ac)
-;;;(run-to-cycle-conform 20 91 8 1 500 1.0 'ciu)
-
-;;;should use
-;;;(run-to-cycle-conform 20 91 8 1 400 1.0 'am)
-;;;(run-to-cycle-conform 20 91 8 1 430 1.0 'ac)
-;;;(run-to-cycle-conform 20 91 8 1 375 1.0 'ciu)
